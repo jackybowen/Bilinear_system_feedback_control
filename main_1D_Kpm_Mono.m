@@ -17,7 +17,7 @@ D = 3; % degree of monomial basis at most D
 g = [0; 1];
 
 alpha = 1;
-beta = 10;
+beta = 100;
 
 %% Generate basis function for EDMD/NSDMD
 Monom = repmat(x,1,D+1);
@@ -35,7 +35,7 @@ end
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;
-dt = 0.01;
+dt = 0.001;
 
 x_limit = [-4 4];
 y_limit = [-4 4];
@@ -138,8 +138,6 @@ cvx_end
 close all
 % digits(3)
 noi = 1;
-idx = find(abs(diag(A))<=1e-4)
-
 % t = rand(1,noi)*2*pi;
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
@@ -153,42 +151,17 @@ Phi = V'*Psi.';
 u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
-for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 1000],[x0;y0]);
 
-%     figure
-%     plot(t,xy(:,1))
-%     hold on
-%     xlabel('t')
-%     ylabel('x')
-% 
-%     figure
-%     plot(t,xy(:,2))
-%     hold on
-%     xlabel('t')
-%     ylabel('y')
-% 
-    figure
-    plot(xy(:,1),xy(:,2))
-    xlabel('x')
-    ylabel('y')
-	figure
-    plot(t,xy.')
-    xlabel('t')
-    ylabel('x and y')
-%     pause
-end
-
-
-
-z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
-z0(idx) = 0;
-% z0 = 4*randn(N,noi);
+syms t;
 z = sym('z',[N,1],'real');
 u = -beta*z'*B'*P*z*z'*z;
 f_z = A*z+B*z*u;
-syms t;
 f_c2 = matlabFunction(f_z,'Vars',{t,z});
+z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
+idx = find(abs(diag(A))<=1e-4)
+z0(idx) = 0;
+% z0 = 4*randn(N,noi);
+
 for i = 1:noi
 %     [t,z] = ode45(f_c,[0 10],[x0(i);y0(i)]);
     [t,z_t] = ode15s(f_c2,[0,1000],z0(:,i));
@@ -209,29 +182,34 @@ ylabel('z_t')
 end
 
 
-
-
-
-
-syms t;
-xz = sym('xz',[N+2 1]);
-z = xz(3:end);
-u = -beta*z'*B'*P*z*z'*z;
-f_xz = [xz(2);-xz(1)+xz(2)*(1-xz(1)^2)+u; A*z + B*z*u];
-syms t;
-f_c3 = matlabFunction(f_xz,'Vars',{t,xz});
 for i = 1:noi
-    [t,xz_t] = ode15s(f_c3,[0,1000],[x0;y0;z0(:,i)]);
-figure
-plot(t,xz_t(:,[1 2]).')
-xlabel('t')
-ylabel('x and y')
-figure
-plot(t,xz_t(:,3:end).')
-xlabel('t')
-ylabel('z')
+    [t,xy] = ode15s(f_c1,[0 1000],[x0;y0]);
+
+%     figure
+%     plot(t,xy(:,1))
+%     hold on
+%     xlabel('t')
+%     ylabel('x')
+% 
+%     figure
+%     plot(t,xy(:,2))
+%     hold on
+%     xlabel('t')
+%     ylabel('y')
+% 
+    figure
+    plot(xy(:,1),xy(:,2))
+    xlabel('t')
+    ylabel('x and y')
+	figure
+    plot(t,xy.')
+    xlabel('t')
+    ylabel('x and y')
+
+
 %     pause
 end
 
-
-
+% xlabel('x')
+% ylabel('y')
+% title(['D=' num2str(D) ',\beta=' num2str(beta) ',\alpha=' num2str(alpha)])
