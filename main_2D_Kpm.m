@@ -8,11 +8,11 @@ x = sym('x',[n,1]);
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
 % Van der Pol Oscillator
-% f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
-% % Linear System
-f = [-1 2;0 -0.9]*x;
+f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
+% % % Linear System
+% f = [-1 2;0 -0.9]*x;
 % f_u =  [1 -2;0 0.95]*x;
-D = 1; % degree of monomial basis at most D
+D = 3; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
 g = [0; 1];
 
@@ -31,7 +31,7 @@ for i = D:-1:0
 end
 
 % Psi = [x(1) x(2)];
-% Psi(1) = [];
+Psi(1) = [];
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;

@@ -9,10 +9,10 @@ x = sym('x',[n,1]);
 % x_dot = f(x) + g(x)u
 % Van der Pol Oscillator
 f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
-% % Linear System
+% % % Linear System
 % f = [-1 2;0 -0.9]*x;
 % f_u =  [1 -2;0 0.95]*x;
-D = 5; % degree of monomial basis at most D
+D = 3; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
 g = [0; 1];
 
@@ -155,9 +155,6 @@ u = simplify(vpa(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi))));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
 
-
-
-
 syms t;
 z = sym('z',[N,1]);
 u = -beta*z'*B'*P*z*z'*z;
@@ -165,10 +162,10 @@ f_z = A*z+B*z*u;
 f_c2 = matlabFunction(f_z,'Vars',{t,z});
 z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
 % z0 = 4*randn(N,noi);
-figure
+
 for i = 1:noi
 %     [t,z] = ode45(f_c,[0 10],[x0(i);y0(i)]);
-    [t,z_t] = ode15s(f_c2,[0,10],z0(:,i));
+    [t,z_t] = ode15s(f_c2,[0,200],z0(:,i));
 %     plot(z(:,1),z(:,2))
 %     hold on
 %     figure(3)
@@ -180,34 +177,35 @@ for i = 1:noi
 
 figure
 plot(t,z_t.')
+xlabel('t')
+ylabel('z_t')
 %     pause
 end
 
 
 for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 10],[x0;y0]);
+    [t,xy] = ode15s(f_c1,[0 200],[x0;y0]);
 
     figure
     plot(t,xy(:,1))
     hold on
+    xlabel('t')
+    ylabel('x')
+
     figure
     plot(t,xy(:,2))
     hold on
+    xlabel('t')
+    ylabel('y')
+
     figure
     plot(t,xy.')
+    xlabel('t')
+    ylabel('x and y')
+
 %     pause
 end
 
 % xlabel('x')
 % ylabel('y')
 % title(['D=' num2str(D) ',\beta=' num2str(beta) ',\alpha=' num2str(alpha)])
-
-figure(3)
-xlabel('t')
-ylabel('x')
-title(['D=' num2str(D) ',\beta=' num2str(beta) ',\alpha=' num2str(alpha)])
-% title(['\alpha=' num2str(alpha)])
-figure(4)
-xlabel('t')
-ylabel('y')
-title(['D=' num2str(D) ',\beta=' num2str(beta) ',\alpha=' num2str(alpha)])
