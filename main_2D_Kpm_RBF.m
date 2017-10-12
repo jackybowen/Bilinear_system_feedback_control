@@ -20,18 +20,21 @@ alpha = 1;
 beta = 10;
 
 %% Generate basis function for EDMD/NSDMD
-Monom = repmat(x,1,D+1);
-Monom(:, 1) = 1;
-Monom = cumprod(Monom,2);
-[X,Y] = ndgrid(Monom(1,:),Monom(2,:));
-Monom = rot90(X.*Y,3);
-Psi = [];
-for i = D:-1:0
-    Psi = [Psi diag(Monom,i).'];
-end
+% Monom = repmat(x,1,D+1);
+% Monom(:, 1) = 1;
+% Monom = cumprod(Monom,2);
+% [X,Y] = ndgrid(Monom(1,:),Monom(2,:));
+% Monom = rot90(X.*Y,3);
+% Psi = [];
+% for i = D:-1:0
+%     Psi = [Psi diag(Monom,i).'];
+% end
+% 
+% % Psi = [x(1) x(2)];
+% Psi(1) = [];
 
-% Psi = [x(1) x(2)];
-Psi(1) = [];
+Psi = @RBF; % Gaussian Radial basis functions
+
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;
@@ -72,7 +75,7 @@ Dphig = Dphi*g;
 
 for i = 1:N
 %     A(i,:) = coeffs_2D(Dpsif(i),Psi);
-    BV(i,:) = coeffs_2D(Dphig(i),Psi);
+    BV(i,:) = coeffs_RBF(Dphig(i),Psi);
 %     m = min(length(Acoeff),N);
 %     A0 = padarray(Acoeff,[N-size(Acoeff,1),N-size(Acoeff,2)],'pre');
 %     Ai = [];

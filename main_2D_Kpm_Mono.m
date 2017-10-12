@@ -9,10 +9,10 @@ x = sym('x',[n,1]);
 % x_dot = f(x) + g(x)u
 % Van der Pol Oscillator
 f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
-% % % Linear System
+% % Linear System
 % f = [-1 2;0 -0.9]*x;
 % f_u =  [1 -2;0 0.95]*x;
-D = 3; % degree of monomial basis at most D
+D = 2; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
 g = [0; 1];
 
@@ -165,7 +165,7 @@ z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
 
 for i = 1:noi
 %     [t,z] = ode45(f_c,[0 10],[x0(i);y0(i)]);
-    [t,z_t] = ode15s(f_c2,[0,200],z0(:,i));
+    [t,z_t] = ode15s(f_c2,[0,100],z0(:,i));
 %     plot(z(:,1),z(:,2))
 %     hold on
 %     figure(3)
@@ -184,7 +184,7 @@ end
 
 
 for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 200],[x0;y0]);
+    [t,xy] = ode15s(f_c1,[0 100],[x0;y0]);
 
     figure
     plot(t,xy(:,1))
