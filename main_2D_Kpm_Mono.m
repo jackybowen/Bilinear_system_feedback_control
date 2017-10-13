@@ -12,7 +12,7 @@ f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
 % % Linear System
 % f = [-1 2;0 -0.9]*x; % Stable case
 % f_u =  [1 -2;0 0.9]*x; % Unstable case
-D = 3; % degree of monomial basis at most D
+D = 10; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
 g = [0; 1];
 
@@ -40,7 +40,7 @@ dt = 0.01;
 x_limit = [-4 4];
 y_limit = [-4 4];
 syms t;
-Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),x_limit,y_limit,dt,Tf,matlabFunction(Psi,'Vars',{x}));
+Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),[x_limit;y_limit],dt,Tf,matlabFunction(Psi,'Vars',{x}));
 [V, E] = eig(Kdmd);
 lambda = log(diag(E))/dt;
 A = diag(lambda);
@@ -210,28 +210,25 @@ end
 
 
 
-
-
-
-syms t;
-xz = sym('xz',[N+2 1]);
-z = xz(3:end);
-u = -beta*z'*B'*P*z*z'*z;
-f_xz = [xz(2);-xz(1)+xz(2)*(1-xz(1)^2)+u; A*z + B*z*u];
-syms t;
-f_c3 = matlabFunction(f_xz,'Vars',{t,xz});
-for i = 1:noi
-    [t,xz_t] = ode15s(f_c3,[0,1000],[x0;y0;z0(:,i)]);
-figure
-plot(t,xz_t(:,[1 2]).')
-xlabel('t')
-ylabel('x and y')
-figure
-plot(t,xz_t(:,3:end).')
-xlabel('t')
-ylabel('z')
-%     pause
-end
-
+% syms t;
+% xz = sym('xz',[N+2 1]);
+% z = xz(3:end);
+% u = -beta*z'*B'*P*z*z'*z;
+% f_xz = [xz(2);-xz(1)+xz(2)*(1-xz(1)^2)+u; A*z + B*z*u];
+% syms t;
+% f_c3 = matlabFunction(f_xz,'Vars',{t,xz});
+% for i = 1:noi
+%     [t,xz_t] = ode15s(f_c3,[0,1000],[x0;y0;z0(:,i)]);
+% figure
+% plot(t,xz_t(:,[1 2]).')
+% xlabel('t')
+% ylabel('x and y')
+% figure
+% plot(t,xz_t(:,3:end).')
+% xlabel('t')
+% ylabel('z')
+% %     pause
+% end
+% 
 
 

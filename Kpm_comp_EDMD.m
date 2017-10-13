@@ -1,23 +1,17 @@
-function [ Kdmd ] = Kpm_comp_EDMD(fun,x_limit,y_limit, dT, Tf, Psi)
+function [ Kdmd ] = Kpm_comp_EDMD(fun,limit, dT, Tf, Psi)
 % Extended Dynamic Mode Decomposition and/or Naturally Structured DMD 
 % main script for 2D nonlinear example
 % Nx: number of basis functions chosen
-xmax=x_limit(2);xmin=x_limit(1);
-ymax=y_limit(2);ymin=y_limit(1);
-
-Dx = xmax-xmin;
-Dy = ymax-ymin;
+n = size(limit,1);
+Dmaxmin = limit(:,2)-limit(:,1);
 %% Generate time sequence of data
-z0 = diag([Dx Dy])*rand(2,100); % Intial conditions in (-3 3)
-z0(1,:) = z0(1,:) - Dx/2;
-z0(2,:) = z0(2,:) - Dy/2;
-
-N = size(z0,2); % number of initial conditions
+noi = 100; % number of initial conditions
+z0 = diag(Dmaxmin)*rand(n,noi)-1/2*repmat(Dmaxmin,1,noi); % Intial conditions in (-3 3)
 data = [];
 X = [];
 Y = [];
 
-for i = 1:N
+for i = 1:noi
     [~, z] = ode45(fun,[0:dT:Tf],z0(:,i));
     X = [X z(1:end-1,:)'];
     Y = [Y z(2:end,:)'];
@@ -34,8 +28,6 @@ end
 %     Y = [Y z(:,2:end)];
 %     data = [data z];
 % end
-
-
 %% Compute the G and A matrix
 G = 0;
 A = 0;

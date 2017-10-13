@@ -1,46 +1,39 @@
 close all;clear all;clc
-% Stablizing controller design for 2D nonlinear system(single control input)
+% Stablizing controller design for 1D nonlinear system(single control input)
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
 % tic
-n = 2; % dimension of system
+n = 1; % dimension of system
 x = sym('x',[n,1]);
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
-% Van der Pol Oscillator
-f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
+f = x*(1-x^2);
+% % Van der Pol Oscillator
+% f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
 % % Linear System
 % f = [-1 2;0 -0.9]*x; % Stable case
 % f_u =  [1 -2;0 0.9]*x; % Unstable case
-D = 3; % degree of monomial basis at most D
+D = 2; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
-g = [0; 1];
+g = 1;
+N = 5; % Number of monomial basis functions
 
 alpha = 1;
-beta = 100;
+beta = 10;
 
 %% Generate basis function for EDMD/NSDMD
-Monom = repmat(x,1,D+1);
-Monom(:, 1) = 1;
-Monom = cumprod(Monom,2);
-[X,Y] = ndgrid(Monom(1,:),Monom(2,:));
-Monom = rot90(X.*Y,3);
-Psi = [];
-for i = D:-1:0
-    Psi = [Psi diag(Monom,i).'];
+for i = 1:N
+    Psi(i) = x^(i-1);
 end
-
 % Psi = [x(1) x(2)];
 % Psi(1) = [];
-N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;
 dt = 0.001;
 
 x_limit = [-4 4];
-y_limit = [-4 4];
 syms t;
-Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),x_limit,y_limit,dt,Tf,matlabFunction(Psi,'Vars',{x}));
+Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),x_limit,dt,Tf,matlabFunction(Psi,'Vars',{x}));
 [V, E] = eig(Kdmd);
 lambda = log(diag(E))/dt;
 A = diag(lambda);
@@ -69,7 +62,7 @@ Dphig = Dphi*g;
 
 for i = 1:N
 %     A(i,:) = coeffs_2D(Dpsif(i),Psi);
-    BV(i,:) = coeffs_2D(Dphig(i),Psi);
+    BV(i,:) = coeffs_1D(Dphig(i),Psi);
 %     m = min(length(Acoeff),N);
 %     A0 = padarray(Acoeff,[N-size(Acoeff,1),N-size(Acoeff,2)],'pre');
 %     Ai = [];
@@ -143,23 +136,32 @@ noi = 1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
 
-x0 = 0.2*rand(1,noi)-0.1;
-y0 = .8*rand(1,noi)-.4;
+x0 = 4*rand(1,noi)-2;
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';
 u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
+for i = 1:noi
+    [t,x_t] = ode15s(f_c1,[0 1000],x0(i));
 
-syms t;
+    figure
+    plot(t,x_t)
+    hold on
+    xlabel('t')
+    ylabel('x')
+%     pause
+end
+
+z0 = double(vpa(subs(V'*Psi.',x,x0)));
+idx = find(abs(diag(A))<=1e-4)
+z0(idx) = 0;
 z = sym('z',[N,1],'real');
 u = -beta*z'*B'*P*z*z'*z;
 f_z = A*z+B*z*u;
+syms t;
 f_c2 = matlabFunction(f_z,'Vars',{t,z});
-z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
-idx = find(abs(diag(A))<=1e-4)
-z0(idx) = 0;
 % z0 = 4*randn(N,noi);
 
 for i = 1:noi
@@ -182,33 +184,7 @@ ylabel('z_t')
 end
 
 
-for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 1000],[x0;y0]);
 
-%     figure
-%     plot(t,xy(:,1))
-%     hold on
-%     xlabel('t')
-%     ylabel('x')
-% 
-%     figure
-%     plot(t,xy(:,2))
-%     hold on
-%     xlabel('t')
-%     ylabel('y')
-% 
-    figure
-    plot(xy(:,1),xy(:,2))
-    xlabel('t')
-    ylabel('x and y')
-	figure
-    plot(t,xy.')
-    xlabel('t')
-    ylabel('x and y')
-
-
-%     pause
-end
 
 % xlabel('x')
 % ylabel('y')
