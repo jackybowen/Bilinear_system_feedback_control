@@ -145,8 +145,8 @@ idx = find(abs(diag(A))<=1e-4)
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
 
-x0 = 2*rand(1,noi)-1;
-y0 = 2*rand(1,noi)-1;
+x0 = 2*rand(1,noi)-1; x0 = -0.79;
+y0 = 2*rand(1,noi)-1; y0 = 
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';

@@ -92,7 +92,7 @@ method = 'EDMD';
 
 % method = 'NSDMD';
 
-%% Plotting eigenfunctions 
+% %% Plotting eigenfunctions 
 % n = 4; % Compute eigenfunctions corresponding to first n dominant eigenvalues
 % % Construct X-Y boxes
 % Nx = 100;
@@ -109,9 +109,9 @@ method = 'EDMD';
 % x = reshape(xx,1,[]);
 % y = reshape(yy,1,[]);
 % XY =  [x;y];
-
+% 
 % [V, D] = eig(Kdmd); % D are eigenvalues of Koopman Operator or ln(D)/dT
-
+% 
 
 
 % PF = (Lambda*Kdmd/Lambda)';
