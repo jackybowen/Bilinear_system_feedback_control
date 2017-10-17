@@ -7,12 +7,16 @@ n = 2; % dimension of system
 x = sym('x',[n,1]);
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
-% Van der Pol Oscillator
-f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
+% % Van der Pol Oscillator
+% f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
+% 2D nonlinear
+delta = -0.01;
+syms t;
+f = [x(2);delta*x(2)-sin(x(1))];
 % % Linear System
-% f = [-1 2;0 -0.9]*x; % Stable case
+% f = [-1 2;0 0.1]*x; % Marginally stable case
 % f_u =  [1 -2;0 0.9]*x; % Unstable case
-D = 3; % degree of monomial basis at most D
+D = 5; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
 g = [0; 1];
 
@@ -34,11 +38,11 @@ end
 % Psi(1) = [];
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
-Tf = 10;
-dt = 0.0001;
+Tf = 5;
+dt = 0.001;
 
-x_limit = [-4 4];
-y_limit = [-4 4];
+x_limit = [-2 2];
+y_limit = [-2 2];
 syms t;
 Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),[x_limit;y_limit],dt,Tf,matlabFunction(Psi,'Vars',{x}));
 [V, E] = eig(Kdmd);
@@ -144,9 +148,9 @@ idx = find(abs(diag(A))<=1e-4)
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
-
-x0 = 2*rand(1,noi)-1; x0 = -0.79;
-y0 = 2*rand(1,noi)-1; y0 = 
+beta = 1e5;
+x0 = 2*rand(1,noi)-1;
+y0 = 2*rand(1,noi)-1;
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';
@@ -155,7 +159,7 @@ u = u - vpa(subs(u,{'x1','x2'},{0,0}));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
 for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 20],[x0;y0]);
+    [t,xy] = ode15s(f_c1,[0 100],[x0;y0]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -190,7 +194,7 @@ end
 % f_c2 = matlabFunction(f_z,'Vars',{t,z});
 % for i = 1:noi
 % %     [t,z] = ode45(f_c,[0 10],[x0(i);y0(i)]);
-%     [t,z_t] = ode15s(f_c2,[0,1000],z0(:,i));
+%     [t,z_t] = ode15s(f_c2,[0,10],z0(:,i));
 % %     plot(z(:,1),z(:,2))
 % %     hold on
 % %     figure(3)
