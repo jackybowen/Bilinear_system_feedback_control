@@ -9,12 +9,12 @@ x = sym('x',[n,1]);
 % x_dot = f(x) + g(x)u
 % % Van der Pol Oscillator
 % f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
-% 2D nonlinear
-delta = -0.01;
-syms t;
-f = [x(2);delta*x(2)-sin(x(1))];
-% % Linear System
-% f = [-1 2;0 0.1]*x; % Marginally stable case
+% % 2D nonlinear
+% delta = -0.01;
+% syms t;
+% f = [x(2);delta*x(2)-sin(x(1))];
+% Linear System
+f = [-1 2;0 0.1]*x; % Marginally stable case
 % f_u =  [1 -2;0 0.9]*x; % Unstable case
 D = 5; % degree of monomial basis at most D
 % N = nchoosek(n+D,D); % Number of monomial basis functions
@@ -27,7 +27,7 @@ beta = 10;
 Monom = repmat(x,1,D+1);
 Monom(:, 1) = 1;
 Monom = cumprod(Monom,2);
-[X,Y] = ndgrid(Monom(1,:),Monom(2,:));
+[X,Y] = ndgrid(Monom(1,:),Monom(2,:),Monom());
 Monom = rot90(X.*Y,3);
 Psi = [];
 for i = D:-1:0
@@ -148,7 +148,6 @@ idx = find(abs(diag(A))<=1e-4)
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
-beta = 1e5;
 x0 = 2*rand(1,noi)-1;
 y0 = 2*rand(1,noi)-1;
 % x0 = 1;
