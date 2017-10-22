@@ -2,7 +2,7 @@ close all;clear all;clc
 % Stablizing controller design for 2D nonlinear system(single control input)
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
-% tic
+tic
 n = 3; % dimension of system
 x = sym('x',[n,1]);
 %% Dynamic system formulation
@@ -48,7 +48,7 @@ Psi = Monom(idx(idx0)).'; % Monomial basis functions
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 100;
-dt = 0.0001;
+dt = 0.001;
 
 x_limit = [-20 20];
 y_limit = [-20 20];
@@ -154,7 +154,7 @@ close all
 noi = 1;
 idx = find(abs(diag(A))<=1e-4)
 
-beta =1000;
+% beta =1000;
 % t = rand(1,noi)*2*pi;
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
@@ -170,7 +170,7 @@ u = u - vpa(subs(u,{'x1','x2','x3'},{0,0,0}));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
 for i = 1:noi
-    [t,xyz] = ode15s(f_c1,[0 100],[x0;y0;z0]);
+    [t,xyz] = ode15s(f_c1,[0 50],[x0;y0;z0]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -221,7 +221,7 @@ end
 % ylabel('z_t')
 % %     pause
 % end
-
+% 
 
 
 % syms t;
@@ -245,4 +245,4 @@ end
 % end
 % 
 
-
+toc

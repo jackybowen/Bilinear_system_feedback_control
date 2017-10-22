@@ -5,7 +5,7 @@ function [ Kdmd ] = Kpm_comp_EDMD(fun,limit, dT, Tf, Psi)
 n = size(limit,1);
 Dmaxmin = limit(:,2)-limit(:,1);
 %% Generate time sequence of data
-noi = 100; % number of initial conditions
+noi = 1000; % number of initial conditions
 z0 = diag(Dmaxmin)*rand(n,noi)-1/2*repmat(Dmaxmin,1,noi); % Intial conditions in (-3 3)
 data = [];
 X = [];
@@ -18,6 +18,8 @@ for i = 1:noi
     data = [data z'];
 end
 
+% figure(5)
+% plot(data(1,:),data(2,:),'*')
 % t = 0:dT:Tf;
 % for i = 1:N
 %     z(:,1) = z0(:,i);

@@ -2,21 +2,21 @@ close all;clear all;clc
 % Stablizing controller design for 2D nonlinear system(single control input)
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
-% tic
+tic
 n = 2; % dimension of system
 x = sym('x',[n,1]);
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
-% Van der Pol Oscillator
-f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
+% % Van der Pol Oscillator
+% f =  [x(2); -x(1)+x(2)*(1-x(1)^2)];
 % 2D nonlinear
 % % Inverted pendulum
 % delta = -0.01;
 % f = [x(2);delta*x(2)-sin(x(1))];
 % % Duffing oscillator
 % f = [x(2);(x(1)-x(1)^3)-0.5*x(2)];
-% % Double well(biased)
-% f = [x(2);x(1)*(1-x(1)^2-x(1)-0.75)];
+% Double well(biased)
+f = [x(2);x(1)*(1-x(1)^2-x(1)-0.75)];
 
 % % Linear System
 % f = [-1 2;0 0.1]*x; % Marginally stable case
@@ -44,10 +44,10 @@ end
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;
-dt = 0.0001;
+dt = 0.1;
 
-x_limit = [-5 5];
-y_limit = [-5 5];
+x_limit = [-2 1];
+y_limit = [-0.5 0.5];
 syms t;
 Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),[x_limit;y_limit],dt,Tf,matlabFunction(Psi,'Vars',{x}));
 [V, E] = eig(Kdmd);
@@ -146,25 +146,27 @@ cvx_end
 %% Closed-loop simulation
 close all
 % digits(3)
-noi = 1;
+noi = 100;
 idx = find(abs(diag(A))<=1e-4)
 
+
+beta = 1e3;
 % t = rand(1,noi)*2*pi;
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
 % beta = 1e5;
-x0 = 2*rand(1,noi)-1;
+x0 = 2.5*rand(1,noi)-1.5;
 y0 = 2*rand(1,noi)-1;
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';
 u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
-u = u - vpa(subs(u,{'x1','x2'},{0,0}));
+u = simplify(u - vpa(subs(u,{'x1','x2'},{0,0})));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
 for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 100],[x0;y0]);
+    [t,xy] = ode15s(f_c1,[0 30],[x0(i);y0(i)]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -180,16 +182,27 @@ for i = 1:noi
 % 
     figure(1)
     plot(xy(:,1),xy(:,2))
-    xlabel('x')
-    ylabel('y')
+    xlabel('$x$','Interpreter','Latex')
+    ylabel('$y$','Interpreter','Latex')
     hold on
 	figure(2)
-    plot(t,xy.')
+    plot(t,xy(:,1))
     xlabel('t')
-    ylabel('x and y')
+    ylabel('$x$','Interpreter','Latex')
+    hold on
+	figure(3)
+    plot(t,xy(:,2))
+    xlabel('t')
+    ylabel('$y$','Interpreter','Latex')
     hold on
 %     pause
 end
+
+figure(1)
+plot(0,0,'rx','Markersize',10)
+% axis equal
+axis([-2,2,-2,2])
+set(gca,'Fontsize',20)
 
 % z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
 % z0(idx) = 0;
@@ -240,5 +253,5 @@ end
 % %     pause
 % end
 % 
-
+toc
 
