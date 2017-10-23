@@ -48,7 +48,7 @@ Psi = Monom(idx(idx0)).'; % Monomial basis functions
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 100;
-dt = 0.001;
+dt = 0.0001;
 
 x_limit = [-20 20];
 y_limit = [-20 20];
@@ -151,17 +151,17 @@ cvx_end
 %% Closed-loop simulation
 close all
 % digits(3)
-noi = 1;
+noi = 10;
 idx = find(abs(diag(A))<=1e-4)
 
-% beta =1000;
+beta =1e5;
 % t = rand(1,noi)*2*pi;
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
-x0 = 2*rand(1,noi)-1;
-y0 = 2*rand(1,noi)-1;
-z0 = 2*rand(1,noi)-1;
+x0 = 40*rand(1,noi)-20;
+y0 = 40*rand(1,noi)-20;
+z0 = 40*rand(1,noi);
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';
@@ -169,8 +169,11 @@ u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
 u = u - vpa(subs(u,{'x1','x2','x3'},{0,0,0}));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
+f_op = matlabFunction(f,'Vars',{t,x});
+
 for i = 1:noi
-    [t,xyz] = ode15s(f_c1,[0 50],[x0;y0;z0]);
+    [t,xyz] = ode15s(f_c1,[0 10],[x0(:,i);y0(:,i);z0(:,i)]);
+    [t0,xyz_0] = ode15s(f_op,[0 10],[x0(:,i);y0(:,i);z0(:,i)]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -184,16 +187,51 @@ for i = 1:noi
 %     xlabel('t')
 %     ylabel('y')
 % 
-%     figure
-%     plot(xy(:,1),xy(:,2))
-%     xlabel('x')
-%     ylabel('y')
-	figure
-    plot(t,xyz.')
-    xlabel('t')
-    ylabel('x, y and z')
+    figure(1)
+    plot3(xyz(:,1),xyz(:,2),xyz(:,3),'b')
+    xlabel('$x$','Interpreter','Latex')
+    ylabel('$y$','Interpreter','Latex')
+    zlabel('$z$','Interpreter','Latex')
+    hold on
+    plot3(xyz_0(:,1),xyz_0(:,2),xyz_0(:,3),'--r')    
+    
+	figure(2)
+    plot(t,xyz(:,1),'b')
+    xlabel('$t$','Interpreter','Latex')
+    ylabel('$x$','Interpreter','Latex')
+    hold on
+    plot(t0,xyz_0(:,1),'r')
+	figure(3)
+    plot(t,xyz(:,2),'b')
+    xlabel('$t$','Interpreter','Latex')
+    ylabel('$y$','Interpreter','Latex')
+    hold on
+    plot(t0,xyz_0(:,2),'r')
+	figure(4)
+    plot(t,xyz(:,3),'b')
+    xlabel('$t$','Interpreter','Latex')
+    ylabel('$z$','Interpreter','Latex')
+    hold on
+    plot(t0,xyz_0(:,3),'r')
+
 %     pause
 end
+
+figure(1)
+plot3(0,0,0,'rx','Markersize',10)
+% axis equal
+% axis([-20,20,-20,20,0,40])
+set(gca,'Fontsize',20)
+legend('Closed-loop','Open-loop')
+grid on
+
+figure(2)
+set(gca,'Fontsize',20)
+figure(3)
+set(gca,'Fontsize',20)
+figure(4)
+set(gca,'Fontsize',20)
+
 
 % v0 = double(vpa(subs(V'*Psi.',{'x1','x2','x3'},{x0,y0,z0})));
 % v0(idx) = 0;

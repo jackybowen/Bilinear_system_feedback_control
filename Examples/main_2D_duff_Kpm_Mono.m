@@ -146,7 +146,7 @@ cvx_end
 %% Closed-loop simulation
 close all
 % digits(3)
-noi = 100;
+noi = 20;
 idx = find(abs(diag(A))<=1e-4)
 
 
@@ -165,8 +165,10 @@ u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
 u = u - vpa(subs(u,{'x1','x2'},{0,0}));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
+f_op = matlabFunction(f,'Vars',{t,x});
 for i = 1:noi
-    [t,xy] = ode15s(f_c1,[0 20],[x0(i);y0(i)]);
+    [t,xy] = ode15s(f_c1,[0 15],[x0(:,i);y0(:,i)]);
+    [t0,xy_0] = ode15s(f_op,[0 15],[x0(:,i);y0(:,i)]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -181,32 +183,40 @@ for i = 1:noi
 %     ylabel('y')
 % 
     figure(1)
-    plot(xy(:,1),xy(:,2))
+    plot(xy(:,1),xy(:,2),'b')
     xlabel('$x$','Interpreter','Latex')
     ylabel('$y$','Interpreter','Latex')
     hold on
+    plot(xy_0(:,1),xy_0(:,2),'r')    
+    
 	figure(2)
-    plot(t,xy(:,1))
-    xlabel('t')
+    plot(t,xy(:,1),'b')
+    xlabel('$t$','Interpreter','Latex')
     ylabel('$x$','Interpreter','Latex')
     hold on
+    plot(t0,xy_0(:,1),'r')
 	figure(3)
-    plot(t,xy(:,2))
-    xlabel('t')
+    plot(t,xy(:,2),'b')
+    xlabel('$t$','Interpreter','Latex')
     ylabel('$y$','Interpreter','Latex')
     hold on
+    plot(t0,xy_0(:,2),'r')
+
 %     pause
 end
-
 figure(1)
 plot(0,0,'rx','Markersize',10)
 % axis equal
-axis([-2,2,-1,1])
+axis([-2,2,-2,2])
 set(gca,'Fontsize',20)
+legend('Closed-loop','Open-loop')
+grid on
+
 figure(2)
 set(gca,'Fontsize',20)
 figure(3)
 set(gca,'Fontsize',20)
+
 
 % z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
 % z0(idx) = 0;
