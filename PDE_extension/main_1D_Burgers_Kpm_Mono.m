@@ -1,57 +1,43 @@
 close all;clear all;clc
-% Stablizing controller design for nD nonlinear system(single control input)
+% Stablizing controller design for 2D nonlinear system(single control input)
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
 tic
-n = 4; % dimension of system
+n = 2; % dimension of system
 x = sym('x',[n,1]);
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
-% Lorenz Attractor
-sigma = 10;
-beta = 8/3;
-rho = 28;
-f = [sigma*(x(2)-x(1));...
-    x(1)*(rho -x(3))-x(2);...
-    x(1)*x(2)-beta*x(3);
-    x(2)-0.1*x(4)];% +B*u
-% f_u =  [1 -2;0 0.9]*x; % Unstable case
-D = 3; % degree of monomial basis at most D
-% N = nchoosek(n+D,D); % Number of monomial basis functions
-g = [0; 1; 0; 0];
 
-% f = [];
-% g = [];
-% D = 3;
+
+D = 5; % degree of monomial basis at most D
+% N = nchoosek(n+D,D); % Number of monomial basis functions
+g = [0; 1]; 
 
 alpha = 1;
 beta = 10;
 
 %% Generate basis function for EDMD/NSDMD
-% Monom = repmat(x,1,D+1);
-% Monom(:, 1) = 1;
-% Monom = cumprod(Monom,2);
-% [X,Y,Z] = ndgrid(Monom(1,:),Monom(2,:),Monom(3,:));
-% Monom = X.*Y.*Z;
-% 
-% [I,J,K] = ndgrid(1:D+1,1:D+1,1:D+1);
-% Sum = I+J+K;
-% idx = find(Sum<=3+D);
-% [~,idx0] = sort(Sum(idx),'ascend');
-% Psi = Monom(idx(idx0)).'; % Monomial basis functions
-global Deg;
-Deg = 10;
-Psi = Monomials(x);
+Monom = repmat(x,1,D+1);
+Monom(:, 1) = 1;
+Monom = cumprod(Monom,2);
+[X,Y] = ndgrid(Monom(1,:),Monom(2,:));
+Monom = rot90(X.*Y,3);
+Psi = [];
+for i = D:-1:0
+    Psi = [Psi diag(Monom,i).'];
+end
+
 % Psi = [x(1) x(2)];
 % Psi(1) = [];
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
-Tf = 10;
-dt = 0.01;
+Tf = 2.5;
+dt = 0.25;
 
-x1xn_limit = [-2*ones(n,1),2*ones(n,1)];
+x_limit = [-2 2];
+y_limit = [-5 5];
 syms t;
-Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),[x1xn_limit],dt,Tf,matlabFunction(Psi,'Vars',{x}));
+Kdmd = Kpm_comp_EDMD(matlabFunction(f,'Vars',{t,x}),[x_limit;y_limit],dt,Tf,matlabFunction(Psi,'Vars',{x}));
 [V, E] = eig(Kdmd);
 lambda = log(diag(E))/dt;
 A = diag(lambda);
@@ -66,7 +52,7 @@ while i <=length(lambda)
         V(:,i+1) = -2*Im;
         i = i + 1;
     end
-    i = i + 1;
+        i = i + 1;
 end
 eig(A)
 % A = -A;
@@ -79,8 +65,8 @@ Dphi = V.'*Dpsi;
 Dphig = Dphi*g;
 
 for i = 1:N
-%     A(i,:) = coeffs_3D(Dpsif(i),Psi);
-    BV(i,:) = coeffs_nD(Dphig(i),Psi,n);
+%     A(i,:) = coeffs_2D(Dpsif(i),Psi);
+    BV(i,:) = coeffs_2D(Dphig(i),Psi);
 %     m = min(length(Acoeff),N);
 %     A0 = padarray(Acoeff,[N-size(Acoeff,1),N-size(Acoeff,2)],'pre');
 %     Ai = [];
@@ -148,27 +134,29 @@ cvx_end
 %% Closed-loop simulation
 close all
 % digits(3)
-noi = 10;
+noi = 20;
 idx = find(abs(diag(A))<=1e-4)
 
-beta =1e5;
+
+beta = 1e1;
 % t = rand(1,noi)*2*pi;
 % r = rand(1,noi)*0.1;
 % x0 = r.*cos(t)-0.4;
 % y0 = r.*sin(t)-0.3;
-x0 = 40*rand(n,noi)-20;
+% beta = 1e5;
+x0 = 3*rand(1,noi)-1.5;
+y0 = 2*rand(1,noi)-1;
 % x0 = 1;
 % y0 = -1.5;
 Phi = V'*Psi.';
 u = simplify(-beta*(Phi.'*B'*P*Phi*(Phi.'*Phi)));
-u = u - vpa(subs(u,{'x1','x2','x3'},{0,0,0}));
+u = u - vpa(subs(u,{'x1','x2'},{0,0}));
 syms t;
 f_c1 = matlabFunction(f+g*u,'Vars',{t,x});
 f_op = matlabFunction(f,'Vars',{t,x});
-
 for i = 1:noi
-    [t,xyz] = ode15s(f_c1,[0 10],[x0(:,i)]);
-    [t0,xyz_0] = ode15s(f_op,[0 10],[x0(:,i)]);
+    [t,xy] = ode15s(f_c1,[0 15],[x0(:,i);y0(:,i)]);
+    [t0,xy_0] = ode15s(f_op,[0 15],[x0(:,i);y0(:,i)]);
 
 %     figure
 %     plot(t,xy(:,1))
@@ -183,39 +171,31 @@ for i = 1:noi
 %     ylabel('y')
 % 
     figure(1)
-    plot3(xyz(:,1),xyz(:,2),xyz(:,3),'b')
+    plot(xy(:,1),xy(:,2),'b')
     xlabel('$x$','Interpreter','Latex')
     ylabel('$y$','Interpreter','Latex')
-    zlabel('$z$','Interpreter','Latex')
     hold on
-    plot3(xyz_0(:,1),xyz_0(:,2),xyz_0(:,3),'--r')    
+    plot(xy_0(:,1),xy_0(:,2),'r')    
     
 	figure(2)
-    plot(t,xyz(:,1),'b')
+    plot(t,xy(:,1),'b')
     xlabel('$t$','Interpreter','Latex')
     ylabel('$x$','Interpreter','Latex')
     hold on
-    plot(t0,xyz_0(:,1),'r')
+    plot(t0,xy_0(:,1),'r')
 	figure(3)
-    plot(t,xyz(:,2),'b')
+    plot(t,xy(:,2),'b')
     xlabel('$t$','Interpreter','Latex')
     ylabel('$y$','Interpreter','Latex')
     hold on
-    plot(t0,xyz_0(:,2),'r')
-	figure(4)
-    plot(t,xyz(:,3),'b')
-    xlabel('$t$','Interpreter','Latex')
-    ylabel('$z$','Interpreter','Latex')
-    hold on
-    plot(t0,xyz_0(:,3),'r')
+    plot(t0,xy_0(:,2),'r')
 
 %     pause
 end
-
 figure(1)
-plot3(0,0,0,'rx','Markersize',10)
+plot(0,0,'rx','Markersize',10)
 % axis equal
-% axis([-20,20,-20,20,0,40])
+axis([-2,2,-2,2])
 set(gca,'Fontsize',20)
 legend('Closed-loop','Open-loop')
 grid on
@@ -224,12 +204,10 @@ figure(2)
 set(gca,'Fontsize',20)
 figure(3)
 set(gca,'Fontsize',20)
-figure(4)
-set(gca,'Fontsize',20)
 
 
-% v0 = double(vpa(subs(V'*Psi.',{'x1','x2','x3'},{x0,y0,z0})));
-% v0(idx) = 0;
+% z0 = double(vpa(subs(V'*Psi.',{'x1','x2'},{x0,y0})));
+% z0(idx) = 0;
 % % z0 = 4*randn(N,noi);
 % z = sym('z',[N,1],'real');
 % u = -beta*z'*B'*P*z*z'*z;
@@ -238,7 +216,7 @@ set(gca,'Fontsize',20)
 % f_c2 = matlabFunction(f_z,'Vars',{t,z});
 % for i = 1:noi
 % %     [t,z] = ode45(f_c,[0 10],[x0(i);y0(i)]);
-%     [t,z_t] = ode15s(f_c2,[0,10],v0(:,i));
+%     [t,z_t] = ode15s(f_c2,[0,10],z0(:,i));
 % %     plot(z(:,1),z(:,2))
 % %     hold on
 % %     figure(3)
@@ -254,7 +232,7 @@ set(gca,'Fontsize',20)
 % ylabel('z_t')
 % %     pause
 % end
-% 
+
 
 
 % syms t;
@@ -277,5 +255,5 @@ set(gca,'Fontsize',20)
 % %     pause
 % end
 % 
-
 toc
+
