@@ -2,7 +2,7 @@ function [ Kdmd, data] = Kpm_comp_EDMD_PDE(fun,z0, dT, Tf, Psi)
 % Extended Dynamic Mode Decomposition and/or Naturally Structured DMD 
 % main script for 2D nonlinear example
 % Nx: number of basis functions chosen
-
+global dx
 %% Generate time sequence of data
 noi = size(z0,2);
 data = [];
@@ -10,14 +10,19 @@ X = [];
 Y = [];
 
 for i = 1:noi
-    [~, z] = ode45(fun,[0:dT:Tf],z0(:,i));
+    [t, z] = ode45(fun,[0:dT:Tf],z0(:,i));
     X = [X z(1:end-1,:)'];
     Y = [Y z(2:end,:)'];
     data = [data z'];
+    for tt = 1:length(t)
+    figure(1)
+    h = plot(0:dx:2,z(tt,:));
+    drawnow;
+    refreshdata(h)
+    end
 end
 
-% figure
-% mesh(tt,xx,U)
+
 % figure(5)
 % plot(data(1,:),data(2,:),'*')
 % t = 0:dT:Tf;

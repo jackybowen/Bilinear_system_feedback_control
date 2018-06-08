@@ -3,8 +3,9 @@ close all;clear all;clc
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
 tic
-nx = 20; % dimension of system
+nx = 3; % dimension of system
 x = sym('x',[nx,1]);
+global dx;
 %% Dynamic system formulation
 % x_dot = f(x) + g(x)u
 % Assume we discretize the PDE by n observables
@@ -14,15 +15,15 @@ f = [];
 for i = 1:nx
     ip = i-1;
     in = i+1;
-    if ip < 1
+    if ip < 1 % Periodic boundary condition
         ip = nx;
     end
-    if in > nx
+    if in > nx % Periodic boundary condition
         in = 1;
     end
     f = [f;vis*(x(ip)+x(in)-2*x(i))/(dx)^2 - x(i)*(x(i)-x(ip))/dx];
 end
-iu = [1 10 20];
+iu = [1 2 3];
 nu = length(iu); % number of control inputs
 g = zeros(nx,nu);
 for  i = 1:nu
@@ -41,7 +42,7 @@ Psi =  Monomials(x);
 % Psi(1) = [];
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
-Tf = 0.2;
+Tf = 10;
 dt = 0.01;
 
 % phi=zeros(1,nx);
@@ -57,10 +58,9 @@ dt = 0.01;
 %     z0(i)=(-2*vis*(dphi(i)/phi(i)))+4;
 % end
 x0 = [0:dx:2]';
-z0 = sin(2*pi*x0);
+z0 = sin(x0);
 syms t;
 [Kdmd, data] = Kpm_comp_EDMD_PDE(matlabFunction(f,'Vars',{t,x}),z0,dt,Tf,matlabFunction(Psi,'Vars',{x}));
-size(data)
 [V, E] = eig(Kdmd);
 lambda = log(diag(E))/dt;
 A = diag(lambda);
@@ -119,9 +119,11 @@ variable t
 % P = sdpvar(N,N)
 % Lm = lambda_min(B'*P+P*B);
 obj = t;
+temp  = 0;
 for j = 1:nu
-    obj = obj - trace(B(:,:,j)'*P+P*B(:,:,j));
+    temp = temp - (B(:,:,j)'*P+P*B(:,:,j));
 end
+obj = obj - trace(temp);
 minimize(obj)
 subject to
 t*eye(N) - (A'*P+P*A) == semidefinite(N);
@@ -287,5 +289,8 @@ cvx_end
 % % %     pause
 % % end
 % % 
+syms t
+f = matlabFunction(f,'Vars',{t,x});
+g = @(t,x) g;
 toc
 

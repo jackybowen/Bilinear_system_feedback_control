@@ -34,8 +34,7 @@ im(1)=nx;
 %%
 %Initial conditions
 for i=1:nx
-%     u(i)=1/(0.3*sqrt(2*pi))*exp(-((x(i)-1)/0.3)^2/2)%
-    u(i) = sin(pi*x(i));%(-2*vis*(dphi(i)/phi(i)))+4;
+    u(i)=exp(-((x(i)-1)/0.3)^2/2)%sin(pi*x(i));%(-2*vis*(dphi(i)/phi(i)))+4;
 end
 
 %%
