@@ -44,6 +44,3 @@ for i=1:1:nt
     %for x=x1
     U(i,nx) = 0;
 end
-
-
-

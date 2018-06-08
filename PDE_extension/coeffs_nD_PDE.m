@@ -9,7 +9,7 @@ function [ C_vec ] = coeffs_nD_PDE(P, Psi, n)
 %   given monomial basis space
 N = length(Psi);
 
-x = sym('x',[n,1]);
+x = sym('y',[n,1]);
 C_vec = zeros(1,N);
 [Cxy,Txy] = coeffs(P,x);
 if ~isempty(Cxy)

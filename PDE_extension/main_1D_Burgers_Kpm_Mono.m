@@ -3,14 +3,21 @@ close all;clear all;clc
 % Assuming#1 monomial basis functions being used
 % Assuming#2 A matrix corresponding to f(x)
 tic
-nx = 3; % dimension of system
+global x_vec obs Phi f g f_y;
+nx = 20; % dimension of full system
 x = sym('x',[nx,1]);
-global dx;
-%% Dynamic system formulation
+xmax = 1;
+dx = xmax/(nx-1);
+x_vec = [0:dx:xmax]'; % spatial discretization
+
+obs = [1,5,10,15,20]; % indices of observations
+ny = length(obs);
+y = sym('y',[ny,1]);
+%% Dynamic system formulation (Explicit method)
 % x_dot = f(x) + g(x)u
 % Assume we discretize the PDE by n observables
-dx = 2/(nx-1);
 vis = 0.01;
+
 f = [];
 for i = 1:nx
     ip = i-1;
@@ -23,9 +30,14 @@ for i = 1:nx
     end
     f = [f;vis*(x(ip)+x(in)-2*x(i))/(dx)^2 - x(i)*(x(i)-x(ip))/dx];
 end
-iu = [1 2 3];
+syms t;
+f_y = f(obs);
+f = matlabFunction(f,'Vars',{t,x});
+f_y =  matlabFunction(f_y,'Vars',{t,x});
+
+iu = [1 2 3]; % indicies of control inputs
 nu = length(iu); % number of control inputs
-g = zeros(nx,nu);
+g = zeros(ny,nu);
 for  i = 1:nu
     g(iu(i),i) = 1;
 end
@@ -37,30 +49,16 @@ beta = 10;
 % N = nchoosek(n+D,D); % Number of monomial basis functiodns
 global Deg
 Deg = 2;
-Psi =  Monomials(x);
+Psi =  Monomials(y);
 % Psi = [x(1) x(2)];
 % Psi(1) = [];
 N = length(Psi);
 %% Approximate the (A,B) bilinear system
 Tf = 10;
 dt = 0.01;
-
-% phi=zeros(1,nx);
-% dphi=zeros(1,nx);
-% z0 = zeros(nx,1);
-% x_range = 0:dx:2;
-% for i=1:nx
-%     phi(i)=exp(-0.25*(x_range(i)^2)/vis)+exp(-0.25*(((2*pi)-x_range(i))^2)/vis);
-%     dphi(i)=(-0.5*x_range(i)/vis)*exp(-0.25*(x_range(i)^2)/vis)+(0.5*((2*pi)-x_range(i))/vis)*exp(-0.25*(((2*pi)-x_range(i))^2)/vis);
-% end
-% %Initial conditions
-% for i=1:nx
-%     z0(i)=(-2*vis*(dphi(i)/phi(i)))+4;
-% end
-x0 = [0:dx:2]';
-z0 = sin(x0);
+z0 = sin(2*pi*x_vec);
 syms t;
-[Kdmd, data] = Kpm_comp_EDMD_PDE(matlabFunction(f,'Vars',{t,x}),z0,dt,Tf,matlabFunction(Psi,'Vars',{x}));
+[Kdmd, data] = Kpm_comp_EDMD_PDE(f,z0,dt,Tf,matlabFunction(Psi,'Vars',{y}));
 [V, E] = eig(Kdmd);
 lambda = log(diag(E))/dt;
 A = diag(lambda);
@@ -79,19 +77,20 @@ while i <=length(lambda)
 end
 eig(A)
 % A = -A;
-Dpsi = jacobian(Psi,x);
+Dpsi = jacobian(Psi,y);
 % Dpsif = sum(Dpsi.*repmat(f.',N,1),2)
 % Dpsig = sum(Dpsi.*repmat(g.',N,1),2)
 Dphi = V.'*Dpsi;
 
 % Dphif = Dphi*f;
 Dphig = Dphi*g;
+g = @(t,y) g;
 BV = zeros(N,N,nu);
 B= zeros(N,N,nu);
 for j = 1:nu
     for i = 1:N
 %     A(i,:) = coeffs_2D(Dpsif(i),Psi);
-    BV(i,:,j) = coeffs_nD_PDE(Dphig(i,j),Psi,nx);
+    BV(i,:,j) = coeffs_nD_PDE(Dphig(i,j),Psi,ny);
 
 %     m = min(length(Acoeff),N);
 %     A0 = padarray(Acoeff,[N-size(Acoeff,1),N-size(Acoeff,2)],'pre');
@@ -108,6 +107,7 @@ for j = 1:nu
     end
     B(:,:,j) = BV(:,:,j)*pinv(V.');
 end
+Phi = matlabFunction(V'*Psi.');
 toc
 tic
 % pause
@@ -121,9 +121,9 @@ variable t
 obj = t;
 temp  = 0;
 for j = 1:nu
-    temp = temp - (B(:,:,j)'*P+P*B(:,:,j));
+    temp = temp + trace(B(:,:,j)'*P+P*B(:,:,j));
 end
-obj = obj - trace(temp);
+obj = obj - (temp);
 minimize(obj)
 subject to
 t*eye(N) - (A'*P+P*A) == semidefinite(N);
@@ -289,8 +289,6 @@ cvx_end
 % % %     pause
 % % end
 % % 
-syms t
-f = matlabFunction(f,'Vars',{t,x});
-g = @(t,x) g;
+
 toc
 
